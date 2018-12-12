@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/bits"
 	"net"
-	"unicode"
 )
 
 type ErrCIDRFormat string
@@ -15,6 +14,14 @@ func (e ErrCIDRFormat) Error() string {
 
 type CIDR struct {
 	*net.IPNet
+}
+
+func MustParseCIDR(s string) *CIDR {
+	c, err := ParseCIDR(s)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }
 
 func ParseCIDR(s string) (*CIDR, error) {
@@ -124,13 +131,4 @@ func (c *CIDR) IPMask() (*IPv4, *IPv4) {
 	mask := new(IPv4)
 	mask.ParseBytes([]byte(c.IPNet.Mask))
 	return ip, mask
-}
-
-func isNumber(s string) bool {
-	for _, r := range s {
-		if unicode.IsDigit(r) == false {
-			return false
-		}
-	}
-	return true
 }
