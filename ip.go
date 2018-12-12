@@ -11,6 +11,20 @@ type IPv4 struct {
 	byteorder binary.ByteOrder
 }
 
+func MustParseIPv4(s string) *IPv4 {
+	ip, err := ParseIPv4(s)
+	if err != nil {
+		panic(err)
+	}
+	return ip
+}
+
+func ParseIPv4(s string) (*IPv4, error) {
+	ip := new(IPv4)
+	err := ip.Parse(s)
+	return ip, err
+}
+
 func (i *IPv4) SetByteOrder(b binary.ByteOrder) {
 	i.byteorder = b
 }
