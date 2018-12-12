@@ -35,11 +35,17 @@ func ParseCIDR(s string) (CIDR, error) {
 	return CIDR{ipnet}, nil
 }
 
-func IPMaskToCIDR(ip string, mask string) CIDR {
-	var ipnet = new(net.IPNet)
-	ipnet.IP = net.ParseIP(ip).To4()
-	ipnet.Mask = net.IPMask(net.ParseIP(mask).To4())
-	return CIDR{ipnet}
+func IPMaskToCIDR(ip string, mask string) (CIDR, error) {
+	var cidr CIDR
+	ipv4, err := ParseIPv4(ip)
+	if err != nil {
+		return cidr, err
+	}
+	ipmask, err := ParseIPv4(mask)
+	if err != nil {
+		return cidr, err
+	}
+	return ParseCIDR(fmt.Sprintf("%v/%v", ipv4, ipmask.Ones()))
 }
 
 func IPRangeToCIDR(startip, endip string) ([]CIDR, error) {
@@ -61,8 +67,11 @@ func IPRangeToCIDR(startip, endip string) ([]CIDR, error) {
 		if i == 0 && bit == 0 || endint == startint {
 			var ip IPv4
 			ip.ParseInt(endint)
-			_, ipnet, _ := net.ParseCIDR(fmt.Sprintf("%s/32", ip))
-			cidrs = append(cidrs, CIDR{ipnet})
+			cidr, err := ParseCIDR(fmt.Sprintf("%s/32", ip))
+			if err != nil {
+				return nil, err
+			}
+			cidrs = append(cidrs, cidr)
 			endint--
 		}
 		i++
@@ -73,11 +82,11 @@ func IPRangeToCIDR(startip, endip string) ([]CIDR, error) {
 			} else {
 				var ip IPv4
 				ip.ParseInt(begin)
-				_, ipnet, err := net.ParseCIDR(fmt.Sprintf("%s/%v", ip, 32-bit))
+				cidr, err := ParseCIDR(fmt.Sprintf("%s/%v", ip, 32-bit))
 				if err != nil {
 					return nil, err
 				}
-				cidrs = append(cidrs, CIDR{ipnet})
+				cidrs = append(cidrs, cidr)
 				if begin == startint {
 					return cidrs, nil
 				}
@@ -102,9 +111,8 @@ func (c CIDR) SplitTo(tomask int) []CIDR {
 		n := ip.Int() + uint32(i<<uint(bits-tomask))
 		var network IPv4
 		network.ParseInt(n)
-		_, ipnet, _ := net.ParseCIDR(fmt.Sprintf("%s/%v", network, tomask))
-
-		cidrs = append(cidrs, CIDR{ipnet})
+		cidr := MustParseCIDR(fmt.Sprintf("%s/%v", network, tomask))
+		cidrs = append(cidrs, cidr)
 	}
 	return cidrs
 }
