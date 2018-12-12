@@ -11,7 +11,7 @@ type IPv4 struct {
 	byteorder binary.ByteOrder
 }
 
-func (i *IPv4) ByteOrder(b binary.ByteOrder) {
+func (i *IPv4) SetByteOrder(b binary.ByteOrder) {
 	i.byteorder = b
 }
 
