@@ -10,16 +10,28 @@ import (
 )
 
 func main() {
-	cidr, err := ipnet.ParseCIDR("1.1.1.0/24")
+	ip, err := ipnet.ParseIPv4("1.1.1.1")
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
+	fmt.Println(ip, ip.Int(), ip.Inverse())
+	ip.ParseInt(111)
+	fmt.Println(ip)
+	cidr := ipnet.MustParseCIDR("1.1.1.0/24")
+	fmt.Println(cidr)
 	fmt.Println(cidr.Int())
+	fmt.Println(cidr.IPMask())
 	fmt.Println(cidr.StartEndIP())
-	ip, mask := cidr.IPMask()
-	fmt.Println(ip, mask, mask.Inverse())
-	fmt.Println(mask.Ones())
-	fmt.Println(ipnet.IPRangeToCIDR("1.1.1.1", "1.1.1.11"))
+	cidr, err = ipnet.IPMaskToCIDR("1.1.0.0", "255.255.0.0")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(cidr)
+	fmt.Println(cidr.IPMask())
+	cidrs, err := ipnet.IPRangeToCIDR("1.1.1.0", "1.1.2.255")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(cidrs)
 }
 ```
