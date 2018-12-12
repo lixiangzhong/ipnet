@@ -11,7 +11,7 @@ type IPv4 struct {
 	byteorder binary.ByteOrder
 }
 
-func MustParseIPv4(s string) *IPv4 {
+func MustParseIPv4(s string) IPv4 {
 	ip, err := ParseIPv4(s)
 	if err != nil {
 		panic(err)
@@ -19,8 +19,8 @@ func MustParseIPv4(s string) *IPv4 {
 	return ip
 }
 
-func ParseIPv4(s string) (*IPv4, error) {
-	ip := new(IPv4)
+func ParseIPv4(s string) (IPv4, error) {
+	var ip IPv4
 	err := ip.Parse(s)
 	return ip, err
 }
@@ -29,7 +29,7 @@ func (i *IPv4) SetByteOrder(b binary.ByteOrder) {
 	i.byteorder = b
 }
 
-func (i *IPv4) Int() uint32 {
+func (i IPv4) Int() uint32 {
 	if i.byteorder == nil {
 		return binary.BigEndian.Uint32(i.IP.To4())
 	}
@@ -62,7 +62,7 @@ func (i *IPv4) ParseBytes(b []byte) {
 	}
 }
 
-func (i *IPv4) Equal(x *IPv4) bool {
+func (i IPv4) Equal(x *IPv4) bool {
 	return i.IP.To4().Equal(x.IP.To4())
 }
 
@@ -95,14 +95,14 @@ func (i *IPv4) SetD(d byte) {
 	i.IP = ip
 }
 
-func (i *IPv4) Inverse() *IPv4 {
-	ip := new(IPv4)
+func (i IPv4) Inverse() IPv4 {
+	var ip IPv4
 	ip.byteorder = i.byteorder
 	ip.ParseInt(^i.Int())
 	return ip
 }
 
-func (i *IPv4) Ones() int {
+func (i IPv4) Ones() int {
 	return 32 - bits.TrailingZeros32(i.Int())
 }
 
