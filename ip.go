@@ -25,6 +25,12 @@ func ParseIPv4(s string) (IPv4, error) {
 	return ip, err
 }
 
+func ParseIPv4FromUint32(i uint32) IPv4 {
+	var ip IPv4
+	ip.ParseInt(i)
+	return ip
+}
+
 func (i *IPv4) SetByteOrder(b binary.ByteOrder) {
 	i.byteorder = b
 }
@@ -100,6 +106,14 @@ func (i IPv4) Inverse() IPv4 {
 	ip.byteorder = i.byteorder
 	ip.ParseInt(^i.Int())
 	return ip
+}
+
+func (i IPv4) AddInt(n uint32) IPv4 {
+	return ParseIPv4FromUint32(i.Int() + n)
+}
+
+func (i IPv4) SubInt(n uint32) IPv4 {
+	return ParseIPv4FromUint32(i.Int() - n)
 }
 
 func (i IPv4) Ones() int {

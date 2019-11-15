@@ -1,9 +1,11 @@
 package ipnet
 
 import (
+	"errors"
 	"fmt"
 	"math/bits"
 	"net"
+	"sort"
 )
 
 type ErrCIDRFormat string
@@ -96,6 +98,7 @@ func IPRangeToCIDR(startip, endip string) ([]CIDR, error) {
 
 		}
 	}
+	SortCIDR(cidrs)
 	return cidrs, nil
 }
 
@@ -114,6 +117,7 @@ func (c CIDR) SplitTo(tomask int) []CIDR {
 		cidr := MustParseCIDR(fmt.Sprintf("%s/%v", network, tomask))
 		cidrs = append(cidrs, cidr)
 	}
+	SortCIDR(cidrs)
 	return cidrs
 }
 
@@ -137,4 +141,48 @@ func (c CIDR) IPMask() (IPv4, IPv4) {
 	var mask IPv4
 	mask.ParseBytes([]byte(c.IPNet.Mask))
 	return ip, mask
+}
+
+func (c CIDR) Each(f func(IPv4) bool) {
+	start, end := c.StartEndIP()
+	for i := start.Int(); i <= end.Int(); i++ {
+		start.ParseInt(i)
+		if !f(start) {
+			return
+		}
+	}
+}
+
+func (c CIDR) ContainsCIDR(sub CIDR) bool {
+	start, end := sub.StartEndIP()
+	return c.Contains(start.IP) && c.Contains(end.IP)
+}
+
+func (c CIDR) Cut(sub CIDR) ([]CIDR, error) {
+	if !c.ContainsCIDR(sub) {
+		return nil, errors.New(c.String() + " does not contain sub:" + sub.String())
+	}
+	start, end := c.StartEndIP()
+	substart, subend := sub.StartEndIP()
+	var data []CIDR
+	cidrs, err := IPRangeToCIDR(start.String(), ParseIPv4FromUint32(substart.Int()-1).String())
+	if err != nil {
+		return data, err
+	}
+	data = append(data, cidrs...)
+	cidrs, err = IPRangeToCIDR(ParseIPv4FromUint32(subend.Int()+1).String(), end.String())
+	if err != nil {
+		return data, err
+	}
+	data = append(data, cidrs...)
+	SortCIDR(data)
+	return data, err
+}
+
+func SortCIDR(data []CIDR) {
+	sort.Slice(data, func(i, j int) bool {
+		istart, _ := data[i].Int()
+		iend, _ := data[j].Int()
+		return istart < iend
+	})
 }
